@@ -12,6 +12,7 @@
   <div class="container">
     <h1>My Blog</h1>
     <a id="newPostBtn" href="/new">New Post</a>
+    <a class="btn btn-dark btn-lg" id="logout" href="/logout" role="button">Logout</a>
     <ul id="postsList">
       <% posts.forEach(post=> { %>
         <li>
@@ -31,7 +32,6 @@
         <% }); %>
     </ul>
   </div>
-
 </body>
 
 </html>
