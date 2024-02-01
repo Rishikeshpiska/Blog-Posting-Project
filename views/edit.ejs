@@ -1,0 +1,22 @@
+<%- include('partials/header2') %>
+
+
+<body>
+    <div class="container">
+      <h1>
+        <%= heading %>
+      </h1>
+      <% if (locals.post) { %>
+        <form id="editForm" method="post" action="/edit/posts/<%=post.id%>">
+          <input type="text" name="title" value="<%=post.title %>">
+          <textarea name="content" placeholder="Content" required rows="10"><%=post.content %></textarea>
+          <input type="text" name="author" value="<%=post.author %>">
+          <button class="full-width" type="submit">
+            <%= submit %>
+          </button>
+        </form>
+        <% } %>
+    </div>
+  </body>
+  
+  </html>

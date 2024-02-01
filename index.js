@@ -62,7 +62,8 @@ app.get("/logout", (req, res) => {
 
 app.get("/posts", async (req, res) => {
   if (req.isAuthenticated()) {
-    user_id= await db.query("SELECT id FROM users WHERE email=$1",[req.user.email]);
+    const user_id_result= await db.query("SELECT id FROM users WHERE email=$1",[req.user.email]);
+    user_id=user_id_result.rows[0].id
     const result = await db.query("SELECT blogposts.* FROM blogposts INNER JOIN users ON blogposts.user_id = users.id WHERE users.email = $1 ORDER BY blogposts.dt", [req.user.email]);
     posts=result.rows;
     res.render('index.ejs', { posts: posts });
@@ -170,7 +171,6 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, cb) => {
       try {
-        console.log(profile);
         const result = await db.query("SELECT * FROM users WHERE email = $1", [
           profile.email,
         ]);
@@ -198,7 +198,7 @@ passport.deserializeUser((user, cb) => {
 });
 
 app.get("/new", (req, res) => {
-  res.render("modify.ejs", { heading: "New Post", submit: "Create Post" });
+  res.render("create.ejs", { heading: "New Post", submit: "Create Post" });
 });
 
 app.post("/create/posts", async (req, res) => {
@@ -207,9 +207,8 @@ app.post("/create/posts", async (req, res) => {
   let content=req.body.content;
   let author=req.body.author;
   let date=new Date();
-  console.log(date);
   let result=await db.query("INSERT INTO blogposts (title,content,author,dt,user_id) VALUES ($1,$2,$3,$4,$5)",[title,content,author,date,user_id]);
-  res.redirect("/");
+  res.redirect("/posts");
   } catch (error) {
       console.log(`Error in create post request: ${error}`);
   res.status(500).json({ message: "Error creating post" });
@@ -222,7 +221,7 @@ app.get("/edit/:id", async (req, res) => {
   if (postId===-1) return res.status(404).json({ message: "Post not found" });
   let result=await db.query("SELECT * FROM blogposts WHERE id=$1",[postId]);
   let post=result.rows[0];
-  res.render("modify.ejs", {heading: "Edit Post",submit: "Update Post",post: post,});
+  res.render("edit.ejs", {heading: "Edit Post",submit: "Update Post",post: post});
   } catch (error) {
     res.status(500).json({ message: "Error fetching post" });
   }
@@ -235,7 +234,7 @@ app.post("/edit/posts/:id", async (req, res) => {
     const author=req.body.author;
     const date=new Date();
     let result=await db.query("UPDATE blogposts SET title=$1, content=$2, author=$3, dt=$4 WHERE id=$5",[title,content,author,date,postId]);
-    res.redirect("/");
+    res.redirect("/posts");
 
 });
 
@@ -243,7 +242,7 @@ app.get("/posts/delete/:id", async(req, res) => {
     const index = parseInt(req.params.id);
     if (index === -1) return res.status(404).json({ message: "Post not found" });
     await db.query("DELETE FROM blogposts WHERE id=$1",[index]);
-    res.redirect("/");
+    res.redirect("/posts");
 });
 
 app.listen(port, () => {
