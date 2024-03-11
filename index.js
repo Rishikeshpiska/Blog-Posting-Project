@@ -61,6 +61,7 @@ app.get("/logout", (req, res) => {
 });
 
 app.get("/posts", async (req, res) => {
+  console.log('login');
   if (req.isAuthenticated()) {
     const user_id_result= await db.query("SELECT id FROM users WHERE email=$1",[req.user.email]);
     user_id=user_id_result.rows[0].id
@@ -88,13 +89,19 @@ app.get(
   })
 );
 
-app.post(
-  "/login",
-  passport.authenticate("local", {
-    successRedirect: "/posts",
-    failureRedirect: "/login",
-  })
-);
+// app.post(
+//   "/login",
+//   passport.authenticate("local", {
+//     successRedirect: "/posts",
+//     failureRedirect: "/login",
+//   })
+// );
+
+app.post('/login', 
+  passport.authenticate('local', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/posts');
+  });
 
 app.post("/register", async (req, res) => {
   const email = req.body.email;
@@ -118,8 +125,7 @@ app.post("/register", async (req, res) => {
           );
           const user = result.rows[0];
           req.login(user, (err) => {
-            console.log("success");
-            res.redirect("/posts");
+            res.redirect("/");
           });
         }
       });
@@ -129,36 +135,34 @@ app.post("/register", async (req, res) => {
   }
 });
 
-passport.use(
-  "local",
-  new Strategy(async function verify(email, password, cb) {
-    try {
-      const result = await db.query("SELECT * FROM users WHERE email = $1 ", [
-        email,
-      ]);
-      if (result.rows.length > 0) {
-        const user = result.rows[0];
-        const storedHashedPassword = user.password;
-        bcrypt.compare(password, storedHashedPassword, (err, valid) => {
-          if (err) {
-            console.error("Error comparing passwords:", err);
-            return cb(err);
-          } else {
-            if (valid) {
-              return cb(null, user);
-            } else {
-              return cb(null, false);
-            }
-          }
-        });
-      } else {
-        return cb("User not found");
-      }
-    } catch (err) {
-      console.log(err);
+passport.use("local", new Strategy({
+  usernameField: 'email'
+}, async (email, password, cb) => {
+  try {
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const storedHashedPassword = user.password;
+      bcrypt.compare(password, storedHashedPassword, (err, valid) => {
+        if (err) {
+          console.error("Error comparing passwords:", err);
+          return cb(err);
+        }
+        if (valid) {
+          return cb(null, user); 
+        } else {
+          return cb(null, false);
+        }
+      });
+    } else {
+      return cb(null, false);
     }
-  })
-);
+  } catch (err) {
+    console.error("Error during authentication:", err);
+    return cb(err);
+  }
+}));
+
 
 passport.use(
   "google",
