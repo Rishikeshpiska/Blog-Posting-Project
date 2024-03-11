@@ -89,14 +89,6 @@ app.get(
   })
 );
 
-// app.post(
-//   "/login",
-//   passport.authenticate("local", {
-//     successRedirect: "/posts",
-//     failureRedirect: "/login",
-//   })
-// );
-
 app.post('/login', 
   passport.authenticate('local', { failureRedirect: '/login' }),
   function(req, res) {
