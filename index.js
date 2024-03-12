@@ -61,7 +61,6 @@ app.get("/logout", (req, res) => {
 });
 
 app.get("/posts", async (req, res) => {
-  console.log('login');
   if (req.isAuthenticated()) {
     const user_id_result= await db.query("SELECT id FROM users WHERE email=$1",[req.user.email]);
     user_id=user_id_result.rows[0].id
